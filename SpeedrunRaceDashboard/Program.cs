@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using SpeedrunRaceDashboard.Components;
+using SpeedrunRaceDashboard.Models;
 
 namespace SpeedrunRaceDashboard;
 
@@ -11,6 +13,19 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
+
+        builder.Services.AddDbContextFactory<RaceDbContext>(options =>
+        {
+            options.UseSqlite("Data Source=race.db;Mode=ReadWriteCreate;Cache=Shared");
+        });
+
+        using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+        {
+            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<RaceDbContext>>();
+            using var context = factory.CreateDbContext();
+            context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+        }
+
 
         var app = builder.Build();
 
