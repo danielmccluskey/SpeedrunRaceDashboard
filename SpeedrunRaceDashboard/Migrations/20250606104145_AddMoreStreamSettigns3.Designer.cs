@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedrunRaceDashboard.Models;
 
@@ -10,9 +11,11 @@ using SpeedrunRaceDashboard.Models;
 namespace SpeedrunRaceDashboard.Migrations
 {
     [DbContext(typeof(RaceDbContext))]
-    partial class RaceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250606104145_AddMoreStreamSettigns3")]
+    partial class AddMoreStreamSettigns3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");

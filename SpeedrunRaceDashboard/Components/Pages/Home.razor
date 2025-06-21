@@ -1,7 +1,47 @@
 ﻿@page "/"
+@inject NavigationManager NavigationManager
+<PageTitle>Speedrun Dashboard</PageTitle>
 
-<PageTitle>Home</PageTitle>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h1 class="display-5 fw-bold">Speedrun Race Dashboard</h1>
+            <p class="lead text-muted">
+                A customizable Blazor Server application designed for hosting speedrun races and Twitch stream overlays.
+            </p>
+        </div>
+    </div>
 
-<h1>Hello, world!</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Features</h4>
+            <ul>
+                <li>Displays multiple live Twitch streams in a single OBS-ready layout</li>
+                <li>Supports custom themes, layouts, team colors, and images</li>
+                <li>Leaderboard, timers, facts carousel, and commentator boxes</li>
+                <li>Designed for real-time Twitch races and marathons</li>
+            </ul>
+        </div>
 
-Welcome to your new app.
+        <div class="col-md-6">
+            <h4>How to Use</h4>
+            <ol>
+                <li>Go to <a href="/streamsettings">Stream Settings</a> to configure your layout and colors</li>
+                <li>Add stream profiles and slots.</li>
+                <li>Add a new Browser source in OBS with 1920x1080 resolution to load the OBS overlay ( <code>@(NavigationManager.BaseUri + "dashobs")</code> as the source)</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-12 text-center">
+            <p class="text-muted">
+                Made with ❤️ using Blazor Server and Entity Framework Core<br />
+                <a href="https://github.com/danielmccluskey/SpeedrunRaceDashboard">Source available on GitHub </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+
+                

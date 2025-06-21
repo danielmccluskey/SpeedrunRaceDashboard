@@ -1,0 +1,166 @@
+@using SpeedrunRaceDashboard.Models
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+@implements IAsyncDisposable
+
+<div class="d-flex flex-column align-items-start justify-content-center">
+    <div class="twitch-container" style="background-color: black; position: relative; border: 3px solid @Slot.TeamColour">
+        <div @ref="twitchEmbedElement" id="@elementId" class="twitch-embed"></div>
+        <LoadingScreen elementId="@elementId" LoadingValue="@ShowLoading" />
+
+        @if (hasInitialised)
+        {
+            <div class="username-overlay position-absolute bottom-0 start-0 w-100 p-1" style="background: rgba(0, 0, 0, 0.6);">
+                <div id="@CarouselElementId" class="carousel carousel-fade slide w-100" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <UserNameText DisplayText="@Profile.UserDisplayName" mute="@Slot.Muted" SmallMode="@SmallMode" />
+                        </div>
+                        <div class="carousel-item">
+                            <UserNameText DisplayText="@Profile.TwitchDisplayName" mute="@Slot.Muted" SmallMode="@SmallMode" ShowTwitchIcon="true" />
+                        </div>
+
+                        @if(!string.IsNullOrEmpty(Profile.PersonalBest))
+                        {
+                            <div class="carousel-item">
+                                <UserNameText DisplayText="@("PB - " + Profile.PersonalBest)" mute="@Slot.Muted" SmallMode="@SmallMode" />
+                            </div>
+                        }
+
+                        
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+@code {
+    private ElementReference twitchEmbedElement;
+    private string elementId;
+    private string CarouselElementId = $"carousel-{Guid.NewGuid()}";
+
+    [Parameter] public StreamSlot Slot { get; set; }
+    [Parameter] public bool SmallMode { get; set; } = false;
+
+    public StreamProfile Profile { get; set; }
+    private int StoredProfileID = -1;
+
+    public bool Muted { get; set; } = false;
+    public bool ShowLoading { get; set; } = false;
+    public bool Paused { get; set; } = false;
+
+    private bool hasInitialised = false;
+    private bool embedded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        elementId = $"TwitchEmbed-{Slot.Id}-{Guid.NewGuid()}";
+
+        if (Slot.ProfileId > 0)
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var profile = await db.StreamProfiles.FindAsync(Slot.ProfileId);
+            if (profile != null)
+            {
+                Profile = profile;
+                StoredProfileID = profile.Id;
+                hasInitialised = true;
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!embedded && Profile != null)
+        {
+            await EmbedTwitch();
+        }
+    }
+
+    private async Task EmbedTwitch()
+    {
+        if (embedded || string.IsNullOrEmpty(Profile.TwitchUsername)) return;
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("newtwitchEmbed.init", elementId, Profile.TwitchUsername);
+            await JSRuntime.InvokeVoidAsync("Carousel.initCarouselFade", CarouselElementId);
+            embedded = true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
+    private async Task DeleteEmbed()
+    {
+        if (!embedded) return;
+        await JSRuntime.InvokeVoidAsync("newtwitchEmbed.delete", elementId);
+        embedded = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Slot == null || Slot.ProfileId <= 0) return;
+
+        if (StoredProfileID != Slot.ProfileId)
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var profile = await db.StreamProfiles.FindAsync(Slot.ProfileId);
+            if (profile != null)
+            {
+                Profile = profile;
+                StoredProfileID = profile.Id;
+                await DeleteEmbed();
+                await EmbedTwitch();
+            }
+        }
+
+        await UpdateVisualStates();
+    }
+
+    private async Task UpdateVisualStates()
+    {
+        if (!embedded) return;
+
+        if (Slot.Muted != Muted)
+            await ChangeMuteState(Slot.Muted);
+        if (Slot.Paused != Paused)
+            await ChangePauseState(Slot.Paused);
+        if (Slot.ShowLoading != ShowLoading)
+            await ChangeLoadingState(Slot.ShowLoading);
+    }
+
+    private async Task ChangePauseState(bool state)
+    {
+        Paused = state;
+        var method = state ? "pause" : "play";
+        await JSRuntime.InvokeVoidAsync($"newtwitchEmbed.{method}", elementId);
+    }
+
+    private async Task ChangeMuteState(bool state)
+    {
+        Muted = state;
+        var method = state ? "mute" : "unmute";
+        await JSRuntime.InvokeVoidAsync($"newtwitchEmbed.{method}", elementId);
+    }
+
+    private async Task ChangeLoadingState(bool state)
+    {
+        ShowLoading = state;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync() => await DeleteEmbed();
+
+    public void Dispose()
+    {
+        _ = DisposeAsync();
+    }
+}

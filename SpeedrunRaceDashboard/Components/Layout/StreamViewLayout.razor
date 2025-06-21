@@ -1,0 +1,54 @@
+﻿@inherits LayoutComponentBase
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@inject IJSRuntime JSRuntime
+
+<HeadContent>
+    @if (!string.IsNullOrWhiteSpace(GoogleFontUrl))
+    {
+        <link href="@GoogleFontUrl" rel="stylesheet" />
+        <style>
+            :root {
+                --stream-font-family: '@(FontFamily ?? "Arial, sans-serif")';
+            }
+
+            html.loading {
+                visibility: hidden;
+            }
+
+            html.loaded {
+                visibility: visible;
+            }
+        </style>
+    }
+</HeadContent>
+
+@if (fontLoaded)
+{
+    <div class="overflow-hidden" style="font-family: var(--stream-font-family);">
+        @Body
+    </div>
+}
+
+@code {
+    private string? GoogleFontUrl;
+    private string? FontFamily;
+    private bool fontLoaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var settings = await db.StreamSettings.FirstOrDefaultAsync();
+        GoogleFontUrl = settings?.GoogleFontUrl;
+        FontFamily = settings?.FontFamily;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("FontLoader.waitForFonts");
+            fontLoaded = true;
+            StateHasChanged();
+        }
+    }
+}

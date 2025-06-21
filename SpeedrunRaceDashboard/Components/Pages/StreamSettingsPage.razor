@@ -1,0 +1,177 @@
+﻿@page "/streamsettings"
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@using SpeedrunRaceDashboard.Models
+
+<h3>Edit Stream Settings</h3>
+
+@if (settings == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@settings" OnValidSubmit="SaveSettings">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <h5>Header</h5>
+
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="settings.UseHeaderImage" />
+            <label class="form-check-label">Use Header Image</label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Header Image URL</label>
+            <InputText class="form-control" @bind-Value="settings.HeaderImageUrl" />
+            <small class="form-text text-muted">Example: https://i.imgur.com/abc123.png</small>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Stream Title</label>
+            <InputText class="form-control" @bind-Value="settings.StreamTitle" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Header Text Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.HeaderTextColour" />
+        </div>
+
+
+        <hr />
+        <h5>Background</h5>
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="settings.UseBackgroundImage" />
+            <label class="form-check-label">Use Background Image</label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Background Image URL</label>
+            <InputText class="form-control" @bind-Value="settings.BackgroundImageUrl" />
+            <small class="form-text text-muted">Example: https://i.imgur.com/bgexample.png</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Background Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.BackgroundColour" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Main Background Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.MainBackgroundColour" />
+        </div>
+
+
+        <hr />
+        <h5>Sidebar</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Sidebar Text Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.SidebarTextColour" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Sidebar Background Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.SidebarBackgroundColour" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Sidebar Image URL</label>
+            <InputText class="form-control" @bind-Value="settings.SidebarImageUrl" />
+            <small class="form-text text-muted">Example: https://i.imgur.com/bgexample.png</small>
+        </div>
+
+
+
+        <hr />
+        <h5>Display Options</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Accent Colour</label>
+            <input type="color" class="form-control form-control-color" @bind="settings.AccentColour" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Font Family</label>
+            <InputText class="form-control" @bind-Value="settings.FontFamily" />
+            <small class="form-text text-muted">Example: Arial, sans-serif</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Google Font Import URL</label>
+            <InputText class="form-control" @bind-Value="settings.GoogleFontUrl" />
+            <small class="form-text text-muted">
+                Example: https://fonts.googleapis.com/css2?family=Orbitron&display=swap
+            </small>
+        </div>
+
+
+        <div class="form-check mb-2">
+            <InputCheckbox class="form-check-input" @bind-Value="settings.ShowTeamBorders" />
+            <label class="form-check-label">Show Team Borders</label>
+        </div>
+
+        <hr />
+        <h5>Advanced</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Custom CSS</label>
+            <InputTextArea class="form-control" @bind-Value="settings.CustomCSS" />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+    </EditForm>
+
+    @if (saveMessage != null)
+    {
+        <div class="alert alert-success mt-3">@saveMessage</div>
+    }
+}
+
+@code {
+    private StreamSettings? settings;
+    private string? saveMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var settingsb = await db.StreamSettings.FirstOrDefaultAsync();
+
+        if (settingsb == null)
+        {
+            settingsb = new StreamSettings();
+
+            //default load the colours with white and black
+            settingsb.HeaderTextColour = "#FFFFFF";
+            settingsb.BackgroundColour = "#000000";
+            settingsb.MainBackgroundColour = "#000000";
+            settingsb.SidebarTextColour = "#FFFFFF";
+            settingsb.SidebarBackgroundColour = "#000000";
+            settingsb.AccentColour = "#FF0000"; // Default accent colour
+            settingsb.FontFamily = "Arial, sans-serif"; // Default font family
+
+
+
+
+            db.StreamSettings.Add(settingsb);
+            await db.SaveChangesAsync();
+        }
+
+        settings = settingsb;
+
+
+
+    }
+
+    private async Task SaveSettings()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var entity = await db.StreamSettings.FindAsync(settings.Id);
+
+        if (entity != null)
+        {
+            db.Entry(entity).CurrentValues.SetValues(settings);
+            await db.SaveChangesAsync();
+            saveMessage = "Settings saved!";
+        }
+    }
+}

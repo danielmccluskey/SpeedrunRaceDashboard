@@ -1,0 +1,184 @@
+﻿@page "/streamprofiles"
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@using SpeedrunRaceDashboard.Models
+
+<PageTitle>Stream Profiles</PageTitle>
+
+<div class="container py-4">
+    <h2 class="mb-4">Manage Stream Profiles</h2>
+
+    @if (editProfile != null)
+    {
+        <EditForm Model="@editProfile" OnValidSubmit="SaveProfile">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label>Twitch Username</label>
+                        <InputText class="form-control" @bind-Value="editProfile.TwitchUsername" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Twitch Display Name</label>
+                        <InputText class="form-control" @bind-Value="editProfile.TwitchDisplayName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>User Display Name</label>
+                        <InputText class="form-control" @bind-Value="editProfile.UserDisplayName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Game Name</label>
+                        <InputText class="form-control" @bind-Value="editProfile.GameName" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label>Team Colour</label>
+                        <input type="color" class="form-control form-control-color" @bind="editProfile.TeamColour" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Completed Time</label>
+                        <InputText class="form-control" @bind-Value="editProfile.CompletedTime" placeholder="e.g. 34:15.21" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Personal Best</label>
+                        <InputText class="form-control" @bind-Value="editProfile.PersonalBest" placeholder="e.g. 30:44.88" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+            </div>
+        </EditForm>
+
+        <hr />
+    }
+
+    <button class="btn btn-primary mb-3" @onclick="AddNewProfile">Add New Profile</button>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Twitch</th>
+                <th>User Display</th>
+                <th>Game</th>
+                <th>Team</th>
+                <th>PB</th>
+                <th>Completed</th>
+                <th style="width: 150px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var profile in profiles)
+            {
+                <tr>
+                    <td>@profile.TwitchUsername</td>
+                    <td>@profile.UserDisplayName</td>
+                    <td>@profile.GameName</td>
+                    <td><span style="color: @profile.TeamColour">@profile.TeamColour</span></td>
+                    <td>@profile.PersonalBest</td>
+                    <td>@profile.CompletedTime</td>
+                    <td>
+                        @if(profile.TwitchUsername != "unassigned")
+                        {
+                            <button class="btn btn-sm btn-warning me-1" @onclick="() => EditProfile(profile)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(profile.Id)">Delete</button>
+                        }
+
+
+                        
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<StreamProfile> profiles = new();
+    private StreamProfile? editProfile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfiles();
+    }
+
+    private async Task LoadProfiles()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        profiles = await db.StreamProfiles.OrderBy(p => p.TwitchUsername).ToListAsync();
+    }
+
+    private void AddNewProfile()
+    {
+        editProfile = new StreamProfile();
+        editProfile.TeamColour = "#000000"; // Default to black
+    }
+
+    private void EditProfile(StreamProfile profile)
+    {
+        // Shallow clone so we don't bind directly to the table list
+        editProfile = new StreamProfile
+            {
+                Id = profile.Id,
+                TwitchUsername = profile.TwitchUsername,
+                TwitchDisplayName = profile.TwitchDisplayName,
+                UserDisplayName = profile.UserDisplayName,
+                GameName = profile.GameName,
+                TeamColour = profile.TeamColour,
+                CompletedTime = profile.CompletedTime,
+                PersonalBest = profile.PersonalBest
+            };
+    }
+
+    private async Task SaveProfile()
+    {
+        if (editProfile == null) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        if (editProfile.Id == 0)
+        {
+            db.StreamProfiles.Add(editProfile);
+        }
+        else
+        {
+            var existing = await db.StreamProfiles.FindAsync(editProfile.Id);
+            if (existing != null)
+            {
+                db.Entry(existing).CurrentValues.SetValues(editProfile);
+            }
+        }
+
+        await db.SaveChangesAsync();
+        editProfile = null;
+        await LoadProfiles();
+    }
+
+    private void CancelEdit()
+    {
+        editProfile = null;
+    }
+
+    private async Task DeleteProfile(int id)
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        var profile = await db.StreamProfiles.FindAsync(id);
+        if (profile != null)
+        {
+            db.StreamProfiles.Remove(profile);
+            await db.SaveChangesAsync();
+            await LoadProfiles();
+        }
+    }
+}

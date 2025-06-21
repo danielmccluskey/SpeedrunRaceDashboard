@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedrunRaceDashboard.Models;
 
@@ -10,9 +11,11 @@ using SpeedrunRaceDashboard.Models;
 namespace SpeedrunRaceDashboard.Migrations
 {
     [DbContext(typeof(RaceDbContext))]
-    partial class RaceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250606083037_AddMoreStreamSettigns2")]
+    partial class AddMoreStreamSettigns2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
@@ -82,10 +85,6 @@ namespace SpeedrunRaceDashboard.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FontFamily")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("GoogleFontUrl")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

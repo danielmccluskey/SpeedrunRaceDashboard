@@ -1,3 +1,6 @@
+
+
+
 h1:focus {
     outline: none;
 }
@@ -35,4 +38,228 @@ h1:focus {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+
+
+.twitch-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    overflow: hidden;
+}
+
+.twitch-embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.twitch-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: scale-down; /* This will keep the aspect ratio of the image while covering the entire container */
+    /* background-color: #070717;*/
+}
+
+.username-container {
+    padding: 0px;
+    margin: 0px;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+
+.loading-container {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    white-space: nowrap;
+}
+
+.card-custom-relay {
+    background-image: url('/images/hrmedia/places.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.card-custom-relayB {
+    background-image: url('/images/hrmedia/times.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.card-custom-relayTimer {
+    background-image: url('/images/hrmedia/timer.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.card-custom-relayPlaces {
+    background-image: url('/images/hrmedia/places.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.card-custom-relayCommentators {
+    background-image: url('https://i.imgur.com/KVmw8cO.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.card-custom-relayFacts {
+    background-image: url('/images/hrmedia/times.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    background-color: transparent;
+}
+
+.gradient-text {
+    background-image: linear-gradient(to top, #819bb4, #ffffff);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    text-fill-color: transparent;
+}
+
+.card-custom {
+    position: relative;
+    background-color: #070717 !important;
+    border-color: #070717 !important;
+    color: #ccc;
+}
+
+.card-custom-noimage {
+    position: relative;
+    background-color: #070717 !important;
+    border-color: #070717 !important;
+    color: #ccc;
+}
+
+.card-custom::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/easydifficulty.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0.2; /* Adjust this value to control the opacity of the background image */
+    z-index: 1;
+}
+
+.card-custom .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.logo {
+    width: 100px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.text-centered {
+    text-align: center;
+}
+
+.text-red {
+    color: #b60b0b;
+    font-weight: bold;
+}
+
+.text-blue {
+    color: #0d23d3;
+    font-weight: bold;
+}
+
+.text-yellow {
+    color: #dbd015;
+    font-weight: bold;
+}
+
+.text-green {
+    color: green;
+    font-weight: bold;
+}
+
+.text-games {
+    color: #e08916;
+    font-weight: bold;
+}
+
+.discord-user-display .card {
+    background-color: #2f3136;
+    color: #fff;
+    border: none;
+}
+
+.discord-user-display .card-header {
+    background-color: #5865F2;
+    padding: 10px;
+}
+
+.discord-user-display .discord-logo {
+    max-width: 50px;
+    max-height: 50px;
+}
+
+.discord-user-display .user-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-avatar-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.discord-user-display .user-info h5 {
+    margin-bottom: 0;
+}
+
+.discord-font {
+    font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.username-overlay {
+    font-size: 0.9rem;
+    color: white;
+}
+.username-text {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0 0.5rem 0 0;
+    max-width: 100%;
 }

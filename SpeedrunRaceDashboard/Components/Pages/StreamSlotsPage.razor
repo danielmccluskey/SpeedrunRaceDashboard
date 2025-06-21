@@ -1,0 +1,159 @@
+﻿@page "/streamslots"
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@using SpeedrunRaceDashboard.Models
+
+<PageTitle>Manage Stream Slots</PageTitle>
+
+<div class="container py-4">
+    <h2 class="mb-4">Stream Slot Dashboard</h2>
+
+    @if (slots == null || profiles == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <EditForm Model="@slots">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Slot</th>
+                            <th>Profile</th>
+                            <th>Team Colour</th>
+                            <th>Loading</th>
+                            <th>Paused</th>
+                            <th>Muted</th>
+                            <th>Hidden</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var slot in slots.OrderBy(s => s.ViewOrder))
+                        {
+                            <tr>
+                                <td>@slot.ViewOrder</td>
+                                <td>
+                                    <select class="form-select" value="@slot.ProfileId" @onchange="async e => await OnProfileChange(slot, e)">
+                                        @foreach (var profile in profiles)
+                                        {
+                                            <option value="@profile.Id">@profile.UserDisplayName (@profile.TwitchUsername)</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <InputText class="form-control" @bind-Value="slot.TeamColour" @oninput="async _ => await SaveAll()" />
+                                </td>
+                                <td>
+                                    <button type="button" class="btn @(slot.ShowLoading ? "btn-success" : "btn-outline-secondary")"
+                                    @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.ShowLoading)))">
+                                        @(slot.ShowLoading ? "Yes" : "No")
+                                    </button>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn @(slot.Paused ? "btn-warning" : "btn-outline-secondary")"
+                                    @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.Paused)))">
+                                        @(slot.Paused ? "Yes" : "No")
+                                    </button>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn @(slot.Muted ? "btn-info" : "btn-outline-secondary")"
+                                    @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.Muted)))">
+                                        @(slot.Muted ? "Yes" : "No")
+                                    </button>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn @(slot.Hidden ? "btn-danger" : "btn-outline-secondary")"
+                                    @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.Hidden)))">
+                                        @(slot.Hidden ? "Yes" : "No")
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private List<StreamSlot> slots = new();
+    private List<StreamProfile> profiles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        profiles = await db.StreamProfiles.OrderBy(p => p.UserDisplayName).ToListAsync();
+        var validProfileIds = profiles.Select(p => p.Id).ToHashSet();
+
+        var defaultProfile = profiles.FirstOrDefault(p => p.TwitchUsername == "unassigned");
+        if (defaultProfile == null)
+        {
+            throw new Exception("Default profile with TwitchUsername 'unassigned' is missing.");
+        }
+
+        var updated = false;
+        slots = await db.StreamSlots.OrderBy(s => s.ViewOrder).ToListAsync();
+
+        foreach (var slot in slots)
+        {
+            // Reassign invalid profiles
+            if (!validProfileIds.Contains(slot.ProfileId))
+            {
+                slot.ProfileId = defaultProfile.Id;
+                updated = true;
+            }
+
+            // Hide if unassigned
+            if (slot.ProfileId == defaultProfile.Id && !slot.Hidden)
+            {
+                slot.Hidden = true;
+                slot.Muted = true; // Also mute if hidden
+                updated = true;
+            }
+        }
+
+        if (updated)
+        {
+            await db.SaveChangesAsync();
+        }
+    }
+
+
+    private async Task OnProfileChange(StreamSlot slot, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var newId))
+        {
+            slot.ProfileId = newId;
+            await SaveAll();
+        }
+    }
+
+    private async Task ToggleBoolAndSave(StreamSlot slot, string propName)
+    {
+        var prop = typeof(StreamSlot).GetProperty(propName);
+        if (prop != null && prop.PropertyType == typeof(bool))
+        {
+            var current = (bool)(prop.GetValue(slot) ?? false);
+            prop.SetValue(slot, !current);
+            await SaveAll();
+        }
+    }
+
+    private async Task SaveAll()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        foreach (var slot in slots)
+        {
+            var existing = await db.StreamSlots.FindAsync(slot.Id);
+            if (existing != null)
+            {
+                db.Entry(existing).CurrentValues.SetValues(slot);
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+}

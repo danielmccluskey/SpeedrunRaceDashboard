@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeedrunRaceDashboard.Models;
 
@@ -10,9 +11,11 @@ using SpeedrunRaceDashboard.Models;
 namespace SpeedrunRaceDashboard.Migrations
 {
     [DbContext(typeof(RaceDbContext))]
-    partial class RaceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250606074711_AddMoreStreamSettigns")]
+    partial class AddMoreStreamSettigns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
@@ -85,10 +88,6 @@ namespace SpeedrunRaceDashboard.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("GoogleFontUrl")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("HeaderImageUrl")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -121,10 +120,6 @@ namespace SpeedrunRaceDashboard.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SidebarBackgroundColour")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SidebarImageUrl")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

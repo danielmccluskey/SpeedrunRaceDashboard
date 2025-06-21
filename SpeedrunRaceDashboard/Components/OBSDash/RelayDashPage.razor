@@ -1,0 +1,179 @@
+﻿@page "/dashobs"
+@layout StreamViewLayout
+@inject IDbContextFactory<RaceDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@if (processed)
+{
+    <div class="row">
+        <div class="col-12">
+            <div class=""
+            style="
+        position: relative;
+        overflow: hidden;
+        padding-top: 56.25%;
+        background-color:@streamSettings.MainBackgroundColour;
+        background-size:cover;
+        background-position:center;
+        background-repeat:no-repeat;
+        @(streamSettings.UseBackgroundImage && !string.IsNullOrWhiteSpace(streamSettings.BackgroundImageUrl)
+            ? $"background-image:url('{streamSettings.BackgroundImageUrl}');"
+            : "")
+            ">
+                <div style="position: absolute; inset: 0;">
+                    <div class="container-fluid h-100">
+                        <div class="row h-100">
+                            <!-- Sidebar -->
+
+                            @if(showSidebar)
+                            {
+                                
+                            
+                            <div class="col-md-2"
+                                 style="
+        background-color:@streamSettings.SidebarBackgroundColour;
+        color:@streamSettings.SidebarTextColour;
+        background-size:cover;
+        background-position:center;
+        background-repeat:no-repeat;
+        @(string.IsNullOrWhiteSpace(streamSettings.SidebarImageUrl)
+            ? ""
+            : $"background-image:url('{streamSettings.SidebarImageUrl}');")
+        border-right:solid 1px @streamSettings.AccentColour;">
+
+                                <div class="d-flex flex-column justify-content-center align-items-center">
+                                    <div class="card bg-transparent mt-2 border-0">
+                                        @if (streamSettings.UseHeaderImage && !string.IsNullOrWhiteSpace(streamSettings.HeaderImageUrl))
+                                        {
+                                            <img src="@streamSettings.HeaderImageUrl" class="card-img-top w-100 logo" alt="Header Image" />
+                                        }
+                                        else
+                                        {
+                                            <h6 class="fw-bold text-center mx-3" style="color:@streamSettings.HeaderTextColour">
+                                                @streamSettings.StreamTitle?.ToUpper()
+                                            </h6>
+                                        }
+
+                                    </div>     
+                                </div>
+                            </div>
+                            }
+                            <!-- Video Grid -->
+                            <div class="col-md-@(showSidebar == true ? "10" : "12 w-100")">
+                                <div class="row  my-5">
+                                    @foreach (var stream in streamSlots)
+                                    {
+                                        <div id="stream-@stream.ProfileId" class="col-md-@colCount mx-auto">
+                                            <div class="video-preview mb-2">
+                                                <TwitchStreamVideoComponent Slot="@stream" />
+                                            </div>
+                                        </div>
+                                    }
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<StreamSlot> streamSlots = new();
+    private StreamSettings streamSettings = new();
+    private bool processed = false;
+    private int colCount = 6;
+    private int RefreshRateMS = 1000;
+    private int showProfileId = -1;
+    private CancellationTokenSource _cts = new();
+    private bool showSidebar = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var query = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query;
+        var parsed = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(query);
+
+        if (parsed.TryGetValue("showspecific", out var showValue))
+            showProfileId = Convert.ToInt32(showValue);
+
+        if (parsed.TryGetValue("nosidebar", out var sidebarValue))
+            showSidebar = !(sidebarValue.ToString().ToLower() == "true");
+
+        await LoadDashboard();
+        processed = true;
+    }
+    [Inject] private IJSRuntime JS { get; set; }
+
+
+    private async Task LoadDashboard()
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+
+        var allSlots = await db.StreamSlots
+            .Where(s => s.ProfileId != -1)
+            .OrderBy(s => s.ViewOrder)
+            .ToListAsync();
+
+        if (showProfileId != -1)
+        {
+            allSlots = allSlots.Where(s => s.ViewOrder == showProfileId).ToList();
+            allSlots.ForEach(s => s.Muted = false);
+        }
+
+        streamSettings = await db.StreamSettings.FirstOrDefaultAsync() ?? new();
+        streamSlots = allSlots;
+        CalculateColCount();
+
+        foreach (var stream in allSlots)
+        {
+            await JS.InvokeVoidAsync("toggleStream", stream.ProfileId, !stream.Hidden);
+        }
+    }
+
+
+    private void CalculateColCount()
+    {
+        int count = streamSlots.Count;
+        colCount = count switch
+        {
+            1 => 12,
+            2 or 3 or 4 => 6,
+            >= 5 and <= 9 => 4,
+            _ => 3
+        };
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ = RefreshLoop(_cts.Token); // only starts once
+        }
+    }
+
+    private async Task RefreshLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            await Task.Delay(RefreshRateMS, token);
+
+            try
+            {
+                await LoadDashboard();
+                InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RefreshLoop] Error: {ex.Message}");
+            }
+        }
+    }
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+
+}

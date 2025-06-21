@@ -9,7 +9,8 @@ namespace SpeedrunRaceDashboard.Models
         public RaceDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<RaceDbContext>();
-            optionsBuilder.UseSqlite("Data Source=race.db;Mode=ReadWriteCreate;Cache=Shared");
+            var dbPath = Path.Combine(AppContext.BaseDirectory, "race.db");
+            optionsBuilder.UseSqlite($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
 
 
             return new RaceDbContext(optionsBuilder.Options);
