@@ -27,10 +27,10 @@
 
                             @if(showSidebar)
                             {
-                                
-                            
-                            <div class="col-md-2"
-                                 style="
+
+
+                                <div class="col-md-2"
+                                style="
         background-color:@streamSettings.SidebarBackgroundColour;
         color:@streamSettings.SidebarTextColour;
         background-size:cover;
@@ -41,29 +41,29 @@
             : $"background-image:url('{streamSettings.SidebarImageUrl}');")
         border-right:solid 1px @streamSettings.AccentColour;">
 
-                                <div class="d-flex flex-column justify-content-center align-items-center">
-                                    <div class="card bg-transparent mt-2 border-0">
-                                        @if (streamSettings.UseHeaderImage && !string.IsNullOrWhiteSpace(streamSettings.HeaderImageUrl))
-                                        {
-                                            <img src="@streamSettings.HeaderImageUrl" class="card-img-top w-100 logo" alt="Header Image" />
-                                        }
-                                        else
-                                        {
-                                            <h6 class="fw-bold text-center mx-3" style="color:@streamSettings.HeaderTextColour">
-                                                @streamSettings.StreamTitle?.ToUpper()
-                                            </h6>
-                                        }
+                                    <div class="d-flex flex-column justify-content-center align-items-center">
+                                        <div class="card bg-transparent mt-2 border-0">
+                                            @if (streamSettings.UseHeaderImage && !string.IsNullOrWhiteSpace(streamSettings.HeaderImageUrl))
+                                            {
+                                                <img src="@streamSettings.HeaderImageUrl" class="card-img-top w-100 logo" alt="Header Image" />
+                                            }
+                                            else
+                                            {
+                                                <h6 class="fw-bold text-center mx-3" style="color:@streamSettings.HeaderTextColour">
+                                                    @streamSettings.StreamTitle?.ToUpper()
+                                                </h6>
+                                            }
 
-                                    </div>     
+                                        </div>     
+                                    </div>
                                 </div>
-                            </div>
                             }
                             <!-- Video Grid -->
                             <div class="col-md-@(showSidebar == true ? "10" : "12 w-100")">
                                 <div class="row  my-5">
                                     @foreach (var stream in streamSlots)
                                     {
-                                        <div id="stream-@stream.ProfileId" class="col-md-@colCount mx-auto">
+                                        <div id="stream-@stream.Id" class="col-md-@colCount mx-auto">
                                             <div class="video-preview mb-2">
                                                 <TwitchStreamVideoComponent Slot="@stream" />
                                             </div>
@@ -113,9 +113,14 @@
         using var db = await DbFactory.CreateDbContextAsync();
 
         var allSlots = await db.StreamSlots
-            .Where(s => s.ProfileId != -1)
+            .Include(s => s.Profile)
+
+            .Where(s => s.Profile.TwitchUsername != "unnasigned")
             .OrderBy(s => s.ViewOrder)
             .ToListAsync();
+
+
+        
 
         if (showProfileId != -1)
         {
@@ -127,16 +132,13 @@
         streamSlots = allSlots;
         CalculateColCount();
 
-        foreach (var stream in allSlots)
-        {
-            await JS.InvokeVoidAsync("toggleStream", stream.ProfileId, !stream.Hidden);
-        }
+        
     }
 
 
     private void CalculateColCount()
     {
-        int count = streamSlots.Count;
+        int count = streamSlots.Where(s => !s.Hidden).Count();
         colCount = count switch
         {
             1 => 12,
@@ -162,7 +164,13 @@
             try
             {
                 await LoadDashboard();
-                InvokeAsync(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
+
+
+                foreach (var stream in streamSlots)
+                {
+                    await JS.InvokeVoidAsync("toggleStream", stream.Id, !stream.Hidden);
+                }
             }
             catch (Exception ex)
             {
