@@ -18,7 +18,6 @@
             <ul>
                 <li>Displays multiple live Twitch streams in a single OBS-ready layout</li>
                 <li>Supports custom themes, layouts, team colors, and images</li>
-                <li>Leaderboard, timers, facts carousel, and commentator boxes</li>
                 <li>Designed for real-time Twitch races and marathons</li>
             </ul>
         </div>
@@ -28,7 +27,17 @@
             <ol>
                 <li>Go to <a href="/streamsettings">Stream Settings</a> to configure your layout and colors</li>
                 <li>Add stream profiles and slots.</li>
-                <li>Add a new Browser source in OBS with 1920x1080 resolution to load the OBS overlay ( <code>@(NavigationManager.BaseUri + "dashobs")</code> as the source)</li>
+                <li>Add a new Browser source in OBS with 1920x1080 resolution to load the OBS overlay ( <code>@(NavigationManager.BaseUri + "dashobs")</code> as the source)
+                    <ul>
+                        <li>You can also use ( <code>@(NavigationManager.BaseUri + "dashobs?nosidebar=true")</code>) to hide the sidebar</li>
+                        <li>You can also use ( <code>@(NavigationManager.BaseUri + "dashobs?showspecific=PROFILEID")</code>) to force show a specific stream</li>
+
+                    </ul>
+                
+                
+                </li>
+                <li>Use the <a href="/streamslots">Stream Slots</a> page to manage which streams are displayed</li>
+                
             </ol>
         </div>
     </div>

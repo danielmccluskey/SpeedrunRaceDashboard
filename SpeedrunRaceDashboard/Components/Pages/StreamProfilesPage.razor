@@ -69,6 +69,7 @@
     <table class="table table-bordered table-hover">
         <thead class="table-light">
             <tr>
+                <th>Profile ID</th>
                 <th>Twitch</th>
                 <th>User Display</th>
                 <th>Game</th>
@@ -82,6 +83,7 @@
             @foreach (var profile in profiles)
             {
                 <tr>
+                    <td>@profile.Id</td>
                     <td>@profile.TwitchUsername</td>
                     <td>@profile.UserDisplayName</td>
                     <td>@profile.GameName</td>

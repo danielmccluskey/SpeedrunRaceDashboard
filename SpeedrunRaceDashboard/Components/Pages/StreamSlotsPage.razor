@@ -21,7 +21,6 @@
                             <th>Slot</th>
                             <th>Profile</th>
                             <th>Team Colour</th>
-                            <th>Loading</th>
                             <th>Paused</th>
                             <th>Muted</th>
                             <th>Hidden</th>
@@ -43,12 +42,7 @@
                                 <td>
                                     <InputText class="form-control" @bind-Value="slot.TeamColour" @oninput="async _ => await SaveAll()" />
                                 </td>
-                                <td>
-                                    <button type="button" class="btn @(slot.ShowLoading ? "btn-success" : "btn-outline-secondary")"
-                                    @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.ShowLoading)))">
-                                        @(slot.ShowLoading ? "Yes" : "No")
-                                    </button>
-                                </td>
+                                
                                 <td>
                                     <button type="button" class="btn @(slot.Paused ? "btn-warning" : "btn-outline-secondary")"
                                     @onclick="@(() => ToggleBoolAndSave(slot, nameof(slot.Paused)))">

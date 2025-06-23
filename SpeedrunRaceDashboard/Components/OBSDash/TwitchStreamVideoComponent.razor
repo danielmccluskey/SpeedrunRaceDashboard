@@ -85,12 +85,18 @@
     private async Task EmbedTwitch()
     {
         if (embedded || string.IsNullOrEmpty(Profile.TwitchUsername)) return;
-
+        if (Profile.TwitchUsername == "unassigned")
+        {
+            Console.WriteLine($"Twitch username is unassigned for profile ID {Profile.Id}. Skipping embed.");
+            return;
+        }
         try
         {
             await JSRuntime.InvokeVoidAsync("newtwitchEmbed.init", elementId, Profile.TwitchUsername);
             await JSRuntime.InvokeVoidAsync("Carousel.initCarouselFade", CarouselElementId);
             embedded = true;
+
+
         }
         catch (Exception e)
         {
@@ -129,7 +135,7 @@
     {
         if (!embedded) return;
 
-        if (Slot.Muted != Muted)
+        //if (Slot.Muted != Muted)
             await ChangeMuteState(Slot.Muted);
         if (Slot.Paused != Paused)
             await ChangePauseState(Slot.Paused);
