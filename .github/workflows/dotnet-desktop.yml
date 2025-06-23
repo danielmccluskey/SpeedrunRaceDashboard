@@ -3,11 +3,15 @@ name: Build and Release Blazor Server App
 on:
   push:
     tags:
-      - 'v*' # e.g. v1.0.0
+      - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rid: [win-x64, win-x86]
 
     steps:
       - name: Checkout repository
@@ -18,22 +22,23 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln
+      - name: Publish Blazor Server app for ${{ matrix.rid }}
+        run: |
+          dotnet publish SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            -o publish-${{ matrix.rid }}
 
-      - name: Build project
-        run: dotnet build SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln --configuration Release --no-restore
+      - name: Zip output for ${{ matrix.rid }}
+        run: |
+          cd publish-${{ matrix.rid }}
+          zip -r ../srd-${{ matrix.rid }}.zip .
+          cd ..
 
-      - name: Publish project
-        run: dotnet publish SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln -c Release -o ./publish
-
-
-      - name: Zip publish output
-        run: zip -r blazor-app.zip ./publish
-
-      - name: Create GitHub Release
+      - name: Upload ${{ matrix.rid }} release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: blazor-app.zip
+          files: srd-${{ matrix.rid }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.SRD_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Use PAT with `repo` scope
