@@ -36,4 +36,4 @@ jobs:
         with:
           files: blazor-app.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SRD_PAT }}
