@@ -19,13 +19,14 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln
 
       - name: Build project
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln --configuration Release --no-restore
 
       - name: Publish project
-        run: dotnet publish -c Release -o ./publish
+        run: dotnet publish SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln -c Release -o ./publish
+
 
       - name: Zip publish output
         run: zip -r blazor-app.zip ./publish
