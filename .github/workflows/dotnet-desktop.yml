@@ -22,14 +22,21 @@ jobs:
       - name: Calculate next tag
         id: set_tag
         run: |
-          latest_tag=$(git tag --sort=-v:refname | head -n 1 || echo "v0.0.0")
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v1.0.0"
+          fi
           echo "Latest tag: $latest_tag"
+          
           version=$(echo $latest_tag | sed -E 's/v([0-9]+)\.([0-9]+)\.([0-9]+)/\1.\2.\3/')
           IFS='.' read -r major minor patch <<< "$version"
+          
           patch=$((patch + 1))
           new_tag="v${major}.${minor}.${patch}"
+          
           echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
           echo "New tag will be $new_tag"
+
 
       - name: Create tag and push
         run: |
