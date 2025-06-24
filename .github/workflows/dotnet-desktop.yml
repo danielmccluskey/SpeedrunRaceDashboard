@@ -2,8 +2,8 @@ name: Build and Release Blazor Server App
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
   build:
@@ -22,6 +22,17 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Get latest release tag
+        id: get_latest_tag
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "Latest tag: $latest_tag"
+          version=$(echo $latest_tag | sed -E 's/v([0-9]+)\.([0-9]+)\.([0-9]+)/\1.\2.\3/')
+          IFS='.' read -r major minor patch <<< "$version"
+          patch=$((patch + 1))
+          new_tag="v${major}.${minor}.${patch}"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
       - name: Publish Blazor Server app for ${{ matrix.rid }}
         run: |
           dotnet publish SpeedrunRaceDashboard/SpeedrunRaceDashboard.sln \
@@ -36,9 +47,11 @@ jobs:
           zip -r ../srd-${{ matrix.rid }}.zip .
           cd ..
 
-      - name: Upload ${{ matrix.rid }} release asset
+      - name: Create GitHub release and upload ${{ matrix.rid }} asset
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.get_latest_tag.outputs.new_tag }}
+          name: Release ${{ steps.get_latest_tag.outputs.new_tag }}
           files: srd-${{ matrix.rid }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Use PAT with `repo` scope
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
